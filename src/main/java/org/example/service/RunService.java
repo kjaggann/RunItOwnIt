@@ -60,6 +60,7 @@ public class RunService {
         run.setDurationSeconds(request.getDurationSeconds());
         run.setCalories(request.getCalories());
         run.setNotes(request.getNotes());
+        run.setStepCount(request.getStepCount());
 
         if (request.getDistanceKm() != null && request.getDurationSeconds() != null && request.getDistanceKm() > 0) {
             run.setAvgPaceSecPerKm((int) (request.getDurationSeconds() / request.getDistanceKm()));
@@ -126,6 +127,7 @@ public class RunService {
                 run.getAvgPaceSecPerKm(),
                 run.getCalories(),
                 run.getNotes(),
+                run.getStepCount(),
                 points
         );
     }

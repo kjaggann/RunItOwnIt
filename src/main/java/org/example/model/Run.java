@@ -36,6 +36,8 @@ public class Run {
 
     private Integer calories;
 
+    private Integer stepCount;
+
     @Column(length = 2000)
     private String notes;
 

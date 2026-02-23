@@ -1,5 +1,6 @@
 package org.example.service;
 
+import org.example.dto.LeaderboardEntry;
 import org.example.dto.TerritoryResponse;
 import org.example.model.RoutePoint;
 import org.example.model.TerritoryScore;
@@ -20,32 +21,33 @@ public class TerritoryService {
         this.territoryScoreRepository = territoryScoreRepository;
     }
 
+    // ~10km × ~9km cells — city/town level
+    private static int latCell(double lat) { return (int) Math.floor(lat * 10); }
+    private static int lngCell(double lng) { return (int) Math.floor(lng * 10); }
+
     @Transactional
     public void processRun(User user, List<RoutePoint> points) {
-        // Group points by grid cell
         Map<String, Long> cellCounts = new HashMap<>();
         Map<String, int[]> cellKeys = new HashMap<>();
 
         for (RoutePoint point : points) {
-            int latCell = (int) Math.floor(point.getLatitude() * 100);
-            int lngCell = (int) Math.floor(point.getLongitude() * 100);
-            String key = latCell + "," + lngCell;
+            int lc = latCell(point.getLatitude());
+            int nc = lngCell(point.getLongitude());
+            String key = lc + "," + nc;
             cellCounts.merge(key, 1L, Long::sum);
-            cellKeys.putIfAbsent(key, new int[]{latCell, lngCell});
+            cellKeys.putIfAbsent(key, new int[]{lc, nc});
         }
 
         for (Map.Entry<String, Long> entry : cellCounts.entrySet()) {
             int[] cells = cellKeys.get(entry.getKey());
-            int latCell = cells[0];
-            int lngCell = cells[1];
             long count = entry.getValue();
 
             TerritoryScore score = territoryScoreRepository
-                    .findByLatCellAndLngCellAndUser(latCell, lngCell, user)
+                    .findByLatCellAndLngCellAndUser(cells[0], cells[1], user)
                     .orElseGet(() -> {
                         TerritoryScore s = new TerritoryScore();
-                        s.setLatCell(latCell);
-                        s.setLngCell(lngCell);
+                        s.setLatCell(cells[0]);
+                        s.setLngCell(cells[1]);
                         s.setUser(user);
                         s.setWaypointCount(0L);
                         return s;
@@ -60,15 +62,14 @@ public class TerritoryService {
     public List<TerritoryResponse> getTerritoriesInBounds(String username,
                                                            double minLat, double maxLat,
                                                            double minLng, double maxLng) {
-        int minLatCell = (int) Math.floor(minLat * 100);
-        int maxLatCell = (int) Math.floor(maxLat * 100);
-        int minLngCell = (int) Math.floor(minLng * 100);
-        int maxLngCell = (int) Math.floor(maxLng * 100);
+        int minLatCell = latCell(minLat);
+        int maxLatCell = latCell(maxLat);
+        int minLngCell = lngCell(minLng);
+        int maxLngCell = lngCell(maxLng);
 
         List<TerritoryScore> scores = territoryScoreRepository
                 .findInBounds(minLatCell, maxLatCell, minLngCell, maxLngCell);
 
-        // Group by cell, find top scorer per cell
         Map<String, List<TerritoryScore>> byCell = scores.stream()
                 .collect(Collectors.groupingBy(s -> s.getLatCell() + "," + s.getLngCell()));
 
@@ -90,8 +91,10 @@ public class TerritoryService {
             boolean ownedByMe = owner.getUser().getUsername().equals(username);
 
             result.add(new TerritoryResponse(
-                    owner.getLatCell() / 100.0,
-                    owner.getLngCell() / 100.0,
+                    owner.getLatCell(),
+                    owner.getLngCell(),
+                    owner.getLatCell() / 10.0,
+                    owner.getLngCell() / 10.0,
                     owner.getUser().getUsername(),
                     myScore,
                     owner.getWaypointCount(),
@@ -100,5 +103,17 @@ public class TerritoryService {
         }
 
         return result;
+    }
+
+    @Transactional(readOnly = true)
+    public List<LeaderboardEntry> getLeaderboard(int latCell, int lngCell) {
+        List<TerritoryScore> scores = territoryScoreRepository
+                .findByLatCellAndLngCellOrderByWaypointCountDesc(latCell, lngCell);
+        List<LeaderboardEntry> entries = new ArrayList<>();
+        for (int i = 0; i < scores.size(); i++) {
+            TerritoryScore s = scores.get(i);
+            entries.add(new LeaderboardEntry(i + 1, s.getUser().getUsername(), s.getWaypointCount()));
+        }
+        return entries;
     }
 }

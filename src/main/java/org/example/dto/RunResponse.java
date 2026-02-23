@@ -20,6 +20,7 @@ public class RunResponse {
     private Integer avgPaceSecPerKm;
     private Integer calories;
     private String notes;
+    private Integer stepCount;
     private List<RoutePointResponse> routePoints;
 
     @Data

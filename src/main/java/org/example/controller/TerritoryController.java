@@ -1,5 +1,6 @@
 package org.example.controller;
 
+import org.example.dto.LeaderboardEntry;
 import org.example.dto.TerritoryResponse;
 import org.example.service.TerritoryService;
 import org.springframework.http.ResponseEntity;
@@ -26,8 +27,14 @@ public class TerritoryController {
             @RequestParam double maxLat,
             @RequestParam double minLng,
             @RequestParam double maxLng) {
-        List<TerritoryResponse> territories = territoryService.getTerritoriesInBounds(
-                userDetails.getUsername(), minLat, maxLat, minLng, maxLng);
-        return ResponseEntity.ok(territories);
+        return ResponseEntity.ok(territoryService.getTerritoriesInBounds(
+                userDetails.getUsername(), minLat, maxLat, minLng, maxLng));
+    }
+
+    @GetMapping("/leaderboard")
+    public ResponseEntity<List<LeaderboardEntry>> getLeaderboard(
+            @RequestParam int latCell,
+            @RequestParam int lngCell) {
+        return ResponseEntity.ok(territoryService.getLeaderboard(latCell, lngCell));
     }
 }

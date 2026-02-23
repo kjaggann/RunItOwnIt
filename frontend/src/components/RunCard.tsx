@@ -7,6 +7,7 @@ interface Run {
   distanceKm: number;
   durationSeconds: number;
   avgPaceSecPerKm: number;
+  stepCount?: number;
 }
 
 interface Props {
@@ -48,6 +49,12 @@ export default function RunCard({ run, onDelete }: Props) {
               <p className="text-white font-medium">{run.avgPaceSecPerKm ? formatPace(run.avgPaceSecPerKm) : '—'}</p>
               <p className="text-gray-500">pace</p>
             </div>
+            {run.stepCount != null && (
+              <div>
+                <p className="text-white font-medium">{run.stepCount.toLocaleString()}</p>
+                <p className="text-gray-500">steps</p>
+              </div>
+            )}
           </div>
         </div>
       </Link>

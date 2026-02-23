@@ -18,6 +18,7 @@ export default function NewRun() {
     distanceKm: '',
     durationSeconds: '',
     calories: '',
+    stepCount: '',
     notes: '',
   });
   const [recording, setRecording] = useState(false);
@@ -71,6 +72,7 @@ export default function NewRun() {
         distanceKm: form.distanceKm ? parseFloat(form.distanceKm) : null,
         durationSeconds: form.durationSeconds ? parseInt(form.durationSeconds) : null,
         calories: form.calories ? parseInt(form.calories) : null,
+        stepCount: form.stepCount ? parseInt(form.stepCount) : null,
         routePoints: routePoints.length > 0 ? routePoints : [],
       };
       const res = await api.post('/api/runs', payload);
@@ -139,15 +141,28 @@ export default function NewRun() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Calories (optional)</label>
-            <input
-              type="number"
-              name="calories"
-              value={form.calories}
-              onChange={handleChange}
-              className="w-full px-3 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-green-500"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Calories (optional)</label>
+              <input
+                type="number"
+                name="calories"
+                value={form.calories}
+                onChange={handleChange}
+                className="w-full px-3 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-green-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Steps (optional)</label>
+              <input
+                type="number"
+                name="stepCount"
+                value={form.stepCount}
+                onChange={handleChange}
+                placeholder="e.g. 6000"
+                className="w-full px-3 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-green-500"
+              />
+            </div>
           </div>
 
           <div>

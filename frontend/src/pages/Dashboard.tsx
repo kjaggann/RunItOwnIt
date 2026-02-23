@@ -14,6 +14,7 @@ interface Run {
   durationSeconds: number;
   avgPaceSecPerKm: number;
   calories: number;
+  stepCount?: number;
   notes: string;
 }
 
@@ -115,7 +116,7 @@ export default function Dashboard() {
         <div className="bg-gray-800 rounded-xl p-6 mb-8">
           <h2 className="text-lg font-semibold mb-4">Territory Map</h2>
           <p className="text-gray-400 text-sm mb-4">
-            Green = your territory · Red = contested by others
+            Green = your territory · Orange = contested · Click a territory for its leaderboard
           </p>
           <TerritoryMap username={username!} />
         </div>

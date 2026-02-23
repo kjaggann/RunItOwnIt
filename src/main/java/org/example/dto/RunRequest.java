@@ -18,6 +18,7 @@ public class RunRequest {
     private Integer durationSeconds;
     private Integer calories;
     private String notes;
+    private Integer stepCount;
     private List<RoutePointRequest> routePoints;
 
     @Data

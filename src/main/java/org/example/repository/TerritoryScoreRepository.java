@@ -17,4 +17,6 @@ public interface TerritoryScoreRepository extends JpaRepository<TerritoryScore, 
            "AND t.lngCell >= :minLng AND t.lngCell <= :maxLng")
     List<TerritoryScore> findInBounds(@Param("minLat") int minLat, @Param("maxLat") int maxLat,
                                       @Param("minLng") int minLng, @Param("maxLng") int maxLng);
+
+    List<TerritoryScore> findByLatCellAndLngCellOrderByWaypointCountDesc(int latCell, int lngCell);
 }
