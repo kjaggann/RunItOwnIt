@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { MapContainer, TileLayer, Rectangle, Tooltip, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Rectangle, Tooltip, CircleMarker, useMapEvents, useMap } from 'react-leaflet';
 import { LatLngBounds } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../api/client';
@@ -17,35 +17,48 @@ interface Props {
   username: string;
 }
 
-function TerritoryLayer({ username }: { username: string }) {
+function LocateUser({ onLocated }: { onLocated: (lat: number, lng: number) => void }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        map.flyTo([coords.latitude, coords.longitude], 15, { duration: 1.2 });
+        onLocated(coords.latitude, coords.longitude);
+      },
+      () => { /* permission denied or unavailable — stay at default */ },
+      { timeout: 8000 }
+    );
+  }, [map, onLocated]);
+
+  return null;
+}
+
+function TerritoryLayer() {
   const [territories, setTerritories] = useState<Territory[]>([]);
   const map = useMap();
 
   const fetchTerritories = useCallback((bounds: LatLngBounds) => {
-    const minLat = bounds.getSouth();
-    const maxLat = bounds.getNorth();
-    const minLng = bounds.getWest();
-    const maxLng = bounds.getEast();
-
     api.get('/api/territories', {
-      params: { minLat, maxLat, minLng, maxLng },
+      params: {
+        minLat: bounds.getSouth(),
+        maxLat: bounds.getNorth(),
+        minLng: bounds.getWest(),
+        maxLng: bounds.getEast(),
+      },
     })
       .then(res => setTerritories(res.data))
       .catch(console.error);
   }, []);
 
-  // Fetch on initial mount
   useEffect(() => {
     fetchTerritories(map.getBounds());
   }, [map, fetchTerritories]);
 
   useMapEvents({
-    moveend(e) {
-      fetchTerritories(e.target.getBounds());
-    },
-    zoomend(e) {
-      fetchTerritories(e.target.getBounds());
-    },
+    moveend(e) { fetchTerritories(e.target.getBounds()); },
+    zoomend(e) { fetchTerritories(e.target.getBounds()); },
   });
 
   return (
@@ -60,9 +73,9 @@ function TerritoryLayer({ username }: { username: string }) {
           <Rectangle
             key={`${t.latCell},${t.lngCell}`}
             bounds={bounds}
-            pathOptions={{ color, fillColor: color, fillOpacity: 0.35, weight: 1 }}
+            pathOptions={{ color, fillColor: color, fillOpacity: 0.3, weight: 1.5, opacity: 0.8 }}
           >
-            <Tooltip sticky>
+            <Tooltip sticky className="territory-tooltip">
               {t.ownedByMe ? '👑' : '⚔️'} {t.ownerUsername} · {t.ownerScore} pts
               {!t.ownedByMe && t.myScore > 0 && ` (you: ${t.myScore})`}
             </Tooltip>
@@ -74,17 +87,30 @@ function TerritoryLayer({ username }: { username: string }) {
 }
 
 export default function TerritoryMap({ username }: Props) {
+  const [userPos, setUserPos] = useState<[number, number] | null>(null);
+
   return (
     <MapContainer
-      center={[37.7749, -122.4194]}
-      zoom={13}
-      style={{ height: '450px', width: '100%', borderRadius: '8px' }}
+      center={[20, 0]}
+      zoom={2}
+      style={{ height: '500px', width: '100%', borderRadius: '10px' }}
+      zoomControl={true}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        subdomains="abcd"
+        maxZoom={19}
       />
-      <TerritoryLayer username={username} />
+      <LocateUser onLocated={(lat, lng) => setUserPos([lat, lng])} />
+      <TerritoryLayer />
+      {userPos && (
+        <CircleMarker
+          center={userPos}
+          radius={9}
+          pathOptions={{ color: '#fff', fillColor: '#3b82f6', fillOpacity: 1, weight: 2.5 }}
+        />
+      )}
     </MapContainer>
   );
 }
