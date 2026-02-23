@@ -159,9 +159,11 @@ A cell is roughly **1.1km × 0.9km**. Run through an area more than anyone else 
 
 ## Screenshots
 
-| Dashboard | Territory Map |
-|-----------|---------------|
-| Stats, weekly chart, run list | Dark Waze-style map with colored territory cells |
+### Dashboard — Stats, Weekly Chart & Territory Map
+![Dashboard](docs/screenshot-dashboard.png)
+
+### Territory Map — Waze-style Dark Theme with GPS Location
+![Territory Map](docs/screenshot-territory.png)
 
 ---
 
