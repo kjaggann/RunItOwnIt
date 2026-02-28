@@ -113,10 +113,10 @@ export default function Dashboard() {
         )}
 
         {/* Territory Map */}
-        <div className="bg-gray-800 rounded-xl p-6 mb-8">
-          <h2 className="text-lg font-semibold mb-4">Territory Map</h2>
-          <p className="text-gray-400 text-sm mb-4">
-            Green = your territory · Orange = contested · Click a territory for its leaderboard
+        <div className="bg-gray-900 rounded-xl p-6 mb-8 border border-green-900">
+          <h2 className="text-lg font-bold mb-1 text-green-400 tracking-widest font-mono">⚔️ WAR ZONE</h2>
+          <p className="text-gray-500 text-xs mb-4 font-mono">
+            🟢 GREEN = your turf &nbsp;·&nbsp; 🔴 RED = enemy territory &nbsp;·&nbsp; click any zone to see the leaderboard
           </p>
           <TerritoryMap username={username!} />
         </div>

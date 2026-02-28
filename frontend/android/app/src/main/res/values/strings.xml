@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RunItOwnIt</string>
+    <string name="title_activity_main">RunItOwnIt</string>
+    <string name="package_name">com.runitownit.app</string>
+    <string name="custom_url_scheme">com.runitownit.app</string>
+</resources>

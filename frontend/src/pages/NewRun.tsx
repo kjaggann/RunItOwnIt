@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Geolocation } from '@capacitor/geolocation';
 import api from '../api/client';
 
 interface RoutePoint {
@@ -24,22 +25,26 @@ export default function NewRun() {
   const [recording, setRecording] = useState(false);
   const [routePoints, setRoutePoints] = useState<RoutePoint[]>([]);
   const [error, setError] = useState('');
-  const watchId = useRef<number | null>(null);
+  const watchId = useRef<string | null>(null);
   const sequence = useRef(0);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const startRecording = () => {
-    if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser');
-      return;
-    }
+  const startRecording = async () => {
+    setError('');
     setRoutePoints([]);
     sequence.current = 0;
+    try {
+      await Geolocation.requestPermissions();
+    } catch {
+      // permissions API not available on web — proceed anyway
+    }
     setRecording(true);
-    watchId.current = navigator.geolocation.watchPosition(
-      (pos) => {
+    const id = await Geolocation.watchPosition(
+      { enableHighAccuracy: true },
+      (pos, err) => {
+        if (err || !pos) { setError('GPS error: ' + (err?.message ?? 'unknown')); return; }
         const point: RoutePoint = {
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
@@ -49,14 +54,13 @@ export default function NewRun() {
         };
         setRoutePoints(prev => [...prev, point]);
       },
-      (err) => setError('GPS error: ' + err.message),
-      { enableHighAccuracy: true }
     );
+    watchId.current = id;
   };
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
     if (watchId.current !== null) {
-      navigator.geolocation.clearWatch(watchId.current);
+      await Geolocation.clearWatch({ id: watchId.current });
       watchId.current = null;
     }
     setRecording(false);
@@ -65,7 +69,7 @@ export default function NewRun() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (recording) stopRecording();
+    if (recording) await stopRecording();
     try {
       const payload = {
         ...form,

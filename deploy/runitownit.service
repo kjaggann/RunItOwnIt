@@ -1,0 +1,24 @@
+[Unit]
+Description=RunItOwnIt Spring Boot API
+After=network.target mysql.service
+Requires=mysql.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/runitownit
+
+# Secrets are injected as environment variables — never stored in the JAR
+EnvironmentFile=/opt/runitownit/.env
+
+ExecStart=/usr/bin/java -jar /opt/runitownit/app.jar \
+    --spring.profiles.active=prod
+
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=runitownit
+
+[Install]
+WantedBy=multi-user.target

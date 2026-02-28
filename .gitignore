@@ -40,3 +40,10 @@ build/
 
 ### Claude Code ###
 .claude/
+
+### Capacitor native build artifacts ###
+frontend/android/.gradle/
+frontend/android/build/
+frontend/android/app/build/
+frontend/ios/App/build/
+frontend/ios/Pods/
