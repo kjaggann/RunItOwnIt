@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -30,6 +31,9 @@ public class AuthService implements UserDetailsService {
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
+
+    @Value("${app.mail-from}")
+    private String mailFrom;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
@@ -89,6 +93,7 @@ public class AuthService implements UserDetailsService {
             passwordResetTokenRepository.save(resetToken);
 
             SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(mailFrom);
             message.setTo(email);
             message.setSubject("Reset your RunItOwnIt password");
             message.setText("Click the link below to reset your password (expires in 1 hour):\n\n"
@@ -98,6 +103,7 @@ public class AuthService implements UserDetailsService {
         });
     }
 
+    @Transactional
     public void resetPassword(String token, String newPassword) {
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset link"));
