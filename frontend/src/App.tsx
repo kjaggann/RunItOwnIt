@@ -6,6 +6,8 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import NewRun from './pages/NewRun';
 import RunDetail from './pages/RunDetail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 function DevLogin() {
   const [params] = useSearchParams();
@@ -27,6 +29,8 @@ function AppRoutes() {
       <Route path="/dev-login" element={<DevLogin />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/runs/new" element={<ProtectedRoute><NewRun /></ProtectedRoute>} />

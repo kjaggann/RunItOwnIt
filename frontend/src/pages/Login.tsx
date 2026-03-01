@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const successMessage = (location.state as { message?: string } | null)?.message ?? '';
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -30,6 +32,7 @@ export default function Login() {
           <h1 className="text-3xl font-bold text-white">RunItOwnIt</h1>
           <p className="text-gray-400 mt-1">Track your runs, own your progress</p>
         </div>
+        {successMessage && <p className="text-green-400 text-sm mb-4">{successMessage}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Username</label>
@@ -50,6 +53,11 @@ export default function Login() {
               className="w-full px-3 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-green-500"
               required
             />
+          </div>
+          <div className="text-right">
+            <Link to="/forgot-password" className="text-sm text-green-400 hover:underline">
+              Forgot password?
+            </Link>
           </div>
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <button
