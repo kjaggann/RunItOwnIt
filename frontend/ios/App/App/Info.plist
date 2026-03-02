@@ -51,5 +51,11 @@
 	<string>RunItOwnIt needs your location to track your run route and show your territory on the map.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>RunItOwnIt needs your location in the background to continue tracking your run.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>RunItOwnIt uses motion data to count your steps in real time during a run.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>RunItOwnIt reads your step count from Apple Health to auto-fill your run data.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>RunItOwnIt may save run data to Apple Health in a future update.</string>
 </dict>
 </plist>

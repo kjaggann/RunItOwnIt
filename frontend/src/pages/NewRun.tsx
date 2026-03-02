@@ -1,6 +1,9 @@
 import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Geolocation } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
+import { CapacitorPedometer, type MeasurementEvent } from '@capgo/capacitor-pedometer';
+import { Health } from '@capgo/capacitor-health';
 import api from '../api/client';
 
 interface RoutePoint {
@@ -25,16 +28,43 @@ export default function NewRun() {
   const [recording, setRecording] = useState(false);
   const [routePoints, setRoutePoints] = useState<RoutePoint[]>([]);
   const [error, setError] = useState('');
+  const [liveSteps, setLiveSteps] = useState<number>(0);
   const watchId = useRef<string | null>(null);
   const sequence = useRef(0);
+  const runStartTime = useRef<Date | null>(null);
+  const pedometerBaselineSteps = useRef<number | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm({ ...form, [e.target.name]: e.target.value });
+
+  const syncStepsFromHealth = async (startTime: Date, endTime: Date) => {
+    try {
+      const { available } = await Health.isAvailable();
+      if (!available) return;
+      await Health.requestAuthorization({ read: ['steps'], write: [] });
+      const result = await Health.queryAggregated({
+        dataType: 'steps',
+        startDate: startTime.toISOString(),
+        endDate: endTime.toISOString(),
+        bucket: 'day',
+        aggregation: 'sum',
+      });
+      const totalSteps = result.samples.reduce(
+        (sum: number, s: { value: number }) => sum + (s.value ?? 0), 0
+      );
+      if (totalSteps > 0) {
+        setForm(prev => ({ ...prev, stepCount: String(totalSteps) }));
+        setLiveSteps(totalSteps);
+      }
+    } catch (e) { console.warn('Health sync skipped:', e); }
+  };
 
   const startRecording = async () => {
     setError('');
     setRoutePoints([]);
     sequence.current = 0;
+    setLiveSteps(0);
+    runStartTime.current = new Date();
     try {
       await Geolocation.requestPermissions();
     } catch {
@@ -56,14 +86,50 @@ export default function NewRun() {
       },
     );
     watchId.current = id;
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const perms = await CapacitorPedometer.requestPermissions();
+        if (perms.activityRecognition === 'granted') {
+          await CapacitorPedometer.startMeasurementUpdates();
+          let baselineCaptured = false;
+          await CapacitorPedometer.addListener('measurement', (data: MeasurementEvent) => {
+            if (!baselineCaptured) {
+              // Android TYPE_STEP_COUNTER is cumulative from boot — capture baseline
+              pedometerBaselineSteps.current = Capacitor.getPlatform() === 'android'
+                ? (data.numberOfSteps ?? 0) : 0;
+              baselineCaptured = true;
+            }
+            const delta = (data.numberOfSteps ?? 0) - (pedometerBaselineSteps.current ?? 0);
+            setLiveSteps(Math.max(0, delta));
+          });
+        }
+      } catch (e) { console.warn('Pedometer unavailable:', e); }
+    }
   };
 
   const stopRecording = async () => {
+    const runEndTime = new Date();
     if (watchId.current !== null) {
       await Geolocation.clearWatch({ id: watchId.current });
       watchId.current = null;
     }
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await CapacitorPedometer.stopMeasurementUpdates();
+        await CapacitorPedometer.removeAllListeners();
+      } catch {}
+    }
+    if (liveSteps > 0) {
+      setForm(prev => ({ ...prev, stepCount: String(liveSteps) }));
+    }
+
     setRecording(false);
+
+    if (Capacitor.isNativePlatform() && runStartTime.current) {
+      await syncStepsFromHealth(runStartTime.current, runEndTime);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -205,6 +271,15 @@ export default function NewRun() {
                 <span className="text-green-400 text-sm">{routePoints.length} points captured</span>
               )}
             </div>
+            {recording && Capacitor.isNativePlatform() && (
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-yellow-400 text-sm font-mono">{liveSteps.toLocaleString()} steps</span>
+                <span className="text-gray-500 text-xs">(live)</span>
+              </div>
+            )}
+            {!recording && routePoints.length > 0 && form.stepCount && (
+              <p className="mt-2 text-green-400 text-xs">Steps auto-filled from Health app. Edit below if needed.</p>
+            )}
           </div>
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
