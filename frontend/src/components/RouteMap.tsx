@@ -28,11 +28,16 @@ interface Props {
 function FitBounds({ positions }: { positions: [number, number][] }) {
   const map = useMap();
   useEffect(() => {
-    if (positions.length > 1) {
-      map.fitBounds(positions);
-    } else if (positions.length === 1) {
-      map.setView(positions[0], 15);
-    }
+    if (positions.length === 0) return;
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+      if (positions.length > 1) {
+        map.fitBounds(L.latLngBounds(positions), { padding: [40, 40] });
+      } else {
+        map.setView(positions[0], 15);
+      }
+    }, 100);
+    return () => clearTimeout(timer);
   }, [map, positions]);
   return null;
 }
